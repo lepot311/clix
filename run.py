@@ -3,7 +3,7 @@ import os
 from PIL import Image
 from Screenshot import Screenshot
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -62,36 +62,44 @@ def grab_card(ob, driver, unit_id):
         print("Timed out waiting for page to load")
 
     path_front = grab_div_by_id('unitCard0')
-    path_back  = grab_div_by_id('unitCard1')
 
-    # merge images
-    image_front = Image.open(path_front)
-    image_back  = Image.open(path_back)
+    try:
+        path_back = grab_div_by_id('unitCard1')
+    except NoSuchElementException:
+        path_back = False
 
-    width  = image_front.width + image_back.width
-    height = image_front.height
+    if path_back:
+        # merge images
+        image_front = Image.open(path_front)
+        image_back  = Image.open(path_back)
 
-    merged = Image.new('RGB', (width, height))
-    merged.paste(image_front, (0, 0))
-    merged.paste(image_back,  (image_front.width, 0))
+        width  = image_front.width + image_back.width
+        height = image_front.height
 
-    path_merged = f"./cards/{unit_id}.png"
-    merged.save(path_merged)
+        merged = Image.new('RGBA', (width, height))
+        merged.paste(image_front, (0, 0))
+        merged.paste(image_back,  (image_front.width, 0))
 
-    print(f"Saved merged image to {path_merged}")
+        path_merged = f"./cards/{unit_id}.png"
+        merged.save(path_merged)
 
-    image_front.close()
-    image_back.close()
-    merged.close()
+        print(f"Saved merged image to {path_merged}")
 
-    # clean up tmp images
-    os.remove(path_front)
-    os.remove(path_back)
+        image_front.close()
+        image_back.close()
+        merged.close()
+
+        # clean up tmp images
+        os.remove(path_front)
+        os.remove(path_back)
+    else:
+        os.rename(path_front, f"{path_front.rsplit('_')[0]}.png")
 
 if __name__=='__main__':
     unit_ids = [
+        'ffxdps002',
         'wkd24DC24-002',
-        #'affe061',
+        'affe061',
     ]
 
     ob = Screenshot.Screenshot()
