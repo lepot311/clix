@@ -27,18 +27,27 @@ class CardGrabber:
         self.driver.close()
         self.driver.quit()
 
-    def grab_div_by_id(self, div_id, hide_elements=None):
+    def grab_div_by_id(self, unit_id, div_id, hide_elements=None):
         image_name = f"{unit_id}_{div_id}.png"
 
         el = self.driver.find_element(By.ID, div_id)
 
         # take full screenshot
-        path_full = self.ob.full_screenshot(
-            self.driver,
-            save_path     = self.output_dir,
-            image_name    = image_name,
-            hide_elements = hide_elements or [],
-        )
+        path_full = None
+        image_valid = False
+
+        while (not path_full) or (not image_valid):
+            try:
+                path_full = self.ob.full_screenshot(
+                    self.driver,
+                    save_path     = self.output_dir,
+                    image_name    = image_name,
+                    hide_elements = hide_elements or [],
+                )
+            except Exception:
+                print("Image not valid, retrying..")
+            else:
+                image_valid = True
 
         # Need to scroll to top, to get absolute coordinates
         self.driver.execute_script("window.scrollTo(0, 0)")
@@ -84,9 +93,11 @@ class CardGrabber:
             self.driver.execute_script("arguments[0].setAttribute('style','margin:0; padding:0;')", div)
 
         path_cropped = self.grab_div_by_id(
+            unit_id,
             'unitCardsContainer',
             hide_elements=[
                 'id=unitControlsContainer',
+                'id=hideUnitButton',
             ],
         )
 
@@ -95,12 +106,25 @@ class CardGrabber:
 
 
 if __name__ == '__main__':
-    with CardGrabber() as grabber:
-        unit_ids = [
-            'ffxdps002',
-            'wkd24DC24-002',
-            'affe061',
-        ]
+    unit_ids = [
+        'ffxdps002',
+        'wkd24DC24-002',
+        'affe061',
+        'dicn013',
+        'smba064',
+        'xmxs052',
+        'hgpc001',
+    ]
 
-        for unit_id in unit_ids:
-            grabber.grab_card(unit_id)
+    def grab(unit_ids):
+        with CardGrabber() as grabber:
+            unit_ids = [unit_ids]
+
+            for unit_id in unit_ids:
+                grabber.grab_card(unit_id)
+
+    from multiprocessing import Pool
+
+    with Pool() as pool:
+        print(f"Process pool size: {pool._processes}")
+        pool.map(grab, unit_ids)
