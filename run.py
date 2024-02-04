@@ -46,6 +46,9 @@ def grab_div_by_id(div_id):
 
 
 def grab_card(ob, driver, unit_id):
+    double = False
+    path_final = f"./cards/{unit_id}.png"
+
     url = f"https://hcunits.net/explore/units/{unit_id}/"
     driver.get(url)
     driver.execute_script(f"document.body.style.zoom='{PAGE_ZOOM}%'")
@@ -60,12 +63,18 @@ def grab_card(ob, driver, unit_id):
 
     path_front = grab_div_by_id('unitCard0')
 
+    # final output image
     try:
-        path_back = grab_div_by_id('unitCard1')
+        # is double sided?
+        el_back = driver.find_element(By.ID, 'unitCard1')
     except NoSuchElementException:
-        path_back = False
+        # single sided; rename front as final
+        os.rename(path_front, path_final)
+        print(f"Saved {unit_id} -> {path_final}")
+    else:
+        # double sided
+        path_back = grab_div_by_id('unitCard1')
 
-    if path_back:
         # merge images
         image_front = Image.open(path_front)
         image_back  = Image.open(path_back)
@@ -76,21 +85,16 @@ def grab_card(ob, driver, unit_id):
         merged = Image.new('RGBA', (width, height))
         merged.paste(image_front, (0, 0))
         merged.paste(image_back,  (image_front.width, 0))
+        merged.save(path_final)
+        print(f"Saved {unit_id} -> {path_final}")
 
-        path_merged = f"./cards/{unit_id}.png"
-        merged.save(path_merged)
-
-        print(f"Saved merged image to {path_merged}")
-
+        # clean up
         image_front.close()
         image_back.close()
         merged.close()
 
-        # clean up tmp images
         os.remove(path_front)
         os.remove(path_back)
-    else:
-        os.rename(path_front, f"{path_front.rsplit('_')[0]}.png")
 
 if __name__ == '__main__':
     unit_ids = [
