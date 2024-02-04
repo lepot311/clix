@@ -11,41 +11,38 @@ from selenium.webdriver.common.by import By
 
 PAGE_TIMEOUT =   5
 PAGE_ZOOM    = 125
-
+PATH_CARDS   = './cards/'
 
 def grab_div_by_id(div_id):
-    save_path = r'./cards/'
     image_name = f"{unit_id}_{div_id}.png"
 
-    element = driver.find_element(By.ID, div_id)
+    el = driver.find_element(By.ID, div_id)
 
     # take full screenshot
-    image = ob.full_screenshot(driver, save_path=save_path, image_name=image_name)
+    image = ob.full_screenshot(driver, save_path=PATH_CARDS, image_name=image_name)
 
     # Need to scroll to top, to get absolute coordinates
     driver.execute_script("window.scrollTo(0, 0)")
-    location = element.location
-    size = element.size
 
     # adjust coords for zoom
-    x = location['x']  * PAGE_ZOOM / 100
-    y = location['y']  * PAGE_ZOOM / 100
-    w = size['width']  * PAGE_ZOOM / 100
-    h = size['height'] * PAGE_ZOOM / 100
-    width  = x + w
-    height = y + h
+    x1 = int(el.location['x']  * PAGE_ZOOM / 100)
+    y1 = int(el.location['y']  * PAGE_ZOOM / 100)
+    w  = int(el.size['width']  * PAGE_ZOOM / 100)
+    h  = int(el.size['height'] * PAGE_ZOOM / 100)
+
+    x2 = x1 + w
+    y2 = y1 + h
 
     # crop full screenshot to div (in place)
     image_object = Image.open(image)
-    image_object = image_object.crop((int(x), int(y), int(width), int(height)))
+    image_object = image_object.crop((x1, y1, x2, y2))
 
-    img_url = os.path.abspath(os.path.join(save_path, image_name))
-    image_object.save(img_url)
+    path_cropped = os.path.abspath(os.path.join(PATH_CARDS, image_name))
+    image_object.save(path_cropped)
     image_object.close()
 
-    print(f"Saved {unit_id} (div={div_id}) to {img_url}")
-
-    return img_url
+    print(f"Saved {unit_id} (div={div_id}) to {path_cropped}")
+    return path_cropped
 
 
 def grab_card(ob, driver, unit_id):
@@ -95,7 +92,7 @@ def grab_card(ob, driver, unit_id):
     else:
         os.rename(path_front, f"{path_front.rsplit('_')[0]}.png")
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unit_ids = [
         'ffxdps002',
         'wkd24DC24-002',
