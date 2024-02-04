@@ -13,13 +13,13 @@ PAGE_TIMEOUT =   5
 PAGE_ZOOM    = 125
 OUTPUT_DIR   = './cards'
 
-def grab_div_by_id(div_id):
+def grab_div_by_id(div_id, hide_elements=None):
     image_name = f"{unit_id}_{div_id}.png"
 
     el = driver.find_element(By.ID, div_id)
 
     # take full screenshot
-    image = ob.full_screenshot(driver, save_path=OUTPUT_DIR, image_name=image_name)
+    path_full = ob.full_screenshot(driver, save_path=OUTPUT_DIR, image_name=image_name, hide_elements=hide_elements or [])
 
     # Need to scroll to top, to get absolute coordinates
     driver.execute_script("window.scrollTo(0, 0)")
@@ -34,7 +34,7 @@ def grab_div_by_id(div_id):
     y2 = y1 + h
 
     # crop full screenshot to div (in place)
-    image_object = Image.open(image)
+    image_object = Image.open(path_full)
     image_object = image_object.crop((x1, y1, x2, y2))
 
     path_cropped = os.path.abspath(os.path.join(OUTPUT_DIR, image_name))
@@ -65,9 +65,9 @@ def grab_card(ob, driver, unit_id):
     for div in card_divs:
         driver.execute_script("arguments[0].setAttribute('style','margin:0; padding:0;')", div)
 
-    path_full = grab_div_by_id('unitCardsContainer')
+    path_cropped = grab_div_by_id('unitCardsContainer', hide_elements=['id=unitControlsContainer',])
 
-    os.rename(path_full, path_final)
+    os.rename(path_cropped, path_final)
     print(f"Saved {unit_id} -> {path_final}")
 
 if __name__ == '__main__':
