@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 
 PAGE_TIMEOUT =   5
 PAGE_ZOOM    = 125
-PATH_CARDS   = './cards/'
+OUTPUT_DIR   = './cards'
 
 def grab_div_by_id(div_id):
     image_name = f"{unit_id}_{div_id}.png"
@@ -19,7 +19,7 @@ def grab_div_by_id(div_id):
     el = driver.find_element(By.ID, div_id)
 
     # take full screenshot
-    image = ob.full_screenshot(driver, save_path=PATH_CARDS, image_name=image_name)
+    image = ob.full_screenshot(driver, save_path=OUTPUT_DIR, image_name=image_name)
 
     # Need to scroll to top, to get absolute coordinates
     driver.execute_script("window.scrollTo(0, 0)")
@@ -37,7 +37,7 @@ def grab_div_by_id(div_id):
     image_object = Image.open(image)
     image_object = image_object.crop((x1, y1, x2, y2))
 
-    path_cropped = os.path.abspath(os.path.join(PATH_CARDS, image_name))
+    path_cropped = os.path.abspath(os.path.join(OUTPUT_DIR, image_name))
     image_object.save(path_cropped)
     image_object.close()
 
@@ -47,11 +47,11 @@ def grab_div_by_id(div_id):
 
 def grab_card(ob, driver, unit_id):
     double = False
-    path_final = f"./cards/{unit_id}.png"
+    path_final = f"{OUTPUT_DIR}/{unit_id}.png"
 
     url = f"https://hcunits.net/explore/units/{unit_id}/"
     driver.get(url)
-    driver.execute_script(f"document.body.style.zoom='{PAGE_ZOOM}%'")
+    #driver.execute_script(f"document.body.style.zoom='{PAGE_ZOOM}%'")
 
     try:
         print(f"Getting {unit_id}...")
@@ -104,7 +104,10 @@ if __name__ == '__main__':
     ]
 
     ob = Screenshot.Screenshot()
+
     driver = webdriver.Chrome()
+    driver.get('chrome://settings/')
+    driver.execute_script(f"chrome.settingsPrivate.setDefaultZoom({PAGE_ZOOM / 100});")
 
     for unit_id in unit_ids:
         grab_card(ob, driver, unit_id)
