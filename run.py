@@ -51,7 +51,6 @@ def grab_card(ob, driver, unit_id):
 
     url = f"https://hcunits.net/explore/units/{unit_id}/"
     driver.get(url)
-    #driver.execute_script(f"document.body.style.zoom='{PAGE_ZOOM}%'")
 
     try:
         print(f"Getting {unit_id}...")
@@ -61,40 +60,15 @@ def grab_card(ob, driver, unit_id):
     except TimeoutException:
         print("Timed out waiting for page to load")
 
-    path_front = grab_div_by_id('unitCard0')
+    card_divs = driver.find_elements(By.CLASS_NAME, "unitCardContainer")
 
-    # final output image
-    try:
-        # is double sided?
-        el_back = driver.find_element(By.ID, 'unitCard1')
-    except NoSuchElementException:
-        # single sided; rename front as final
-        os.rename(path_front, path_final)
-        print(f"Saved {unit_id} -> {path_final}")
-    else:
-        # double sided
-        path_back = grab_div_by_id('unitCard1')
+    for div in card_divs:
+        driver.execute_script("arguments[0].setAttribute('style','margin:0; padding:0;')", div)
 
-        # merge images
-        image_front = Image.open(path_front)
-        image_back  = Image.open(path_back)
+    path_full = grab_div_by_id('unitCardsContainer')
 
-        width  = image_front.width + image_back.width
-        height = image_front.height
-
-        merged = Image.new('RGBA', (width, height))
-        merged.paste(image_front, (0, 0))
-        merged.paste(image_back,  (image_front.width, 0))
-        merged.save(path_final)
-        print(f"Saved {unit_id} -> {path_final}")
-
-        # clean up
-        image_front.close()
-        image_back.close()
-        merged.close()
-
-        os.remove(path_front)
-        os.remove(path_back)
+    os.rename(path_full, path_final)
+    print(f"Saved {unit_id} -> {path_final}")
 
 if __name__ == '__main__':
     unit_ids = [
