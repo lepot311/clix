@@ -110,10 +110,7 @@ class CardGrabber:
 
 if __name__ == '__main__':
     sets = [
-        'trek',
-        'stt2',
-        'trek3',
-        'trek4',
+        'm24',
     ]
 
     import requests
