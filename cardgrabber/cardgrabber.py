@@ -77,6 +77,10 @@ class CardGrabber:
     def grab_card(self, unit_id, set_name=None):
         if set_name:
             path_final = f"{self.output_dir}/{set_name}/{unit_id}.png"
+            try:
+                os.mkdir(f"{self.output_dir}/{set_name}")
+            except FileExistsError:
+                pass
         else:
             path_final = f"{self.output_dir}/{unit_id}.png"
 
