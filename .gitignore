@@ -1,2 +1,3 @@
 *.swp
-cards/*
+cards
+tmp

@@ -14,6 +14,7 @@ class CardGrabber:
         self.page_timeout = page_timeout
         self.page_zoom    = page_zoom
         self.output_dir   = output_dir
+        self.tmp_dir      = './tmp'
 
     def __enter__(self):
         self.ob = Screenshot.Screenshot()
@@ -40,7 +41,7 @@ class CardGrabber:
             try:
                 path_full = self.ob.full_screenshot(
                     self.driver,
-                    save_path     = self.output_dir,
+                    save_path     = self.tmp_dir,
                     image_name    = image_name,
                     hide_elements = hide_elements or [],
                 )
@@ -65,7 +66,7 @@ class CardGrabber:
         image_object = Image.open(path_full)
         image_object = image_object.crop((x1, y1, x2, y2))
 
-        path_cropped = os.path.abspath(os.path.join(self.output_dir, image_name))
+        path_cropped = os.path.abspath(os.path.join(self.tmp_dir, image_name))
         image_object.save(path_cropped)
         image_object.close()
 
