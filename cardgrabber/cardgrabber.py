@@ -73,8 +73,11 @@ class CardGrabber:
         return path_cropped
 
 
-    def grab_card(self, unit_id):
-        path_final = f"{self.output_dir}/{unit_id}.png"
+    def grab_card(self, unit_id, set_name=None):
+        if set_name:
+            path_final = f"{self.output_dir}/{set_name}/{unit_id}.png"
+        else:
+            path_final = f"{self.output_dir}/{unit_id}.png"
 
         url = f"https://hcunits.net/explore/units/{unit_id}/"
         self.driver.get(url)
@@ -106,25 +109,38 @@ class CardGrabber:
 
 
 if __name__ == '__main__':
-    unit_ids = [
-        'ffxdps002',
-        'wkd24DC24-002',
-        'affe061',
-        'dicn013',
-        'smba064',
-        'xmxs052',
-        'hgpc001',
+    sets = [
+        'trek',
+        'stt2',
+        'trek3',
+        'trek4',
     ]
+
+    import requests
+
+    set_name__unit_id = []
+
+    for set_name in sets:
+        url = f"https://hcunits.net/api/v1/sets/{set_name}/"
+        response = requests.get(url)
+        data = response.json()
+        for unit in data['unit_list']:
+            set_name__unit_id.append([
+                set_name,
+                unit['unit_id'],
+            ])
 
     def grab(unit_ids):
         with CardGrabber() as grabber:
             unit_ids = [unit_ids]
 
-            for unit_id in unit_ids:
-                grabber.grab_card(unit_id)
+            for set_name, unit_id in unit_ids:
+                print(f"Grabbing {set_name} : {unit_id}")
+                grabber.grab_card(unit_id, set_name=set_name)
+                break
 
     from multiprocessing import Pool
 
     with Pool() as pool:
         print(f"Process pool size: {pool._processes}")
-        pool.map(grab, unit_ids)
+        pool.map(grab, set_name__unit_id)
