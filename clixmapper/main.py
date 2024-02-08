@@ -4,12 +4,6 @@ Create OBJ meshes for Clix maps
 import itertools
 
 
-class Face:
-    def __init__(self, vertices):
-        self.vertices = vertices
-        self.normal   = 'TODO'
-
-
 class Cube:
     vertices = list(itertools.product((0.0, 1.0), repeat=3))
     face_patterns = (
@@ -48,8 +42,7 @@ class Grid:
 
     @property
     def as_obj(self):
-        result = "s 0\n"  # smooth shading OFF
-
+        result = ""
         # vertices
         for cube in self.cubes:
             for v in cube.vertices:
@@ -66,6 +59,8 @@ class Grid:
             offset = 8 * cube.x + (8 * self.h * cube.y)
             for ni, pattern in enumerate(Cube.face_patterns):
                 result += f"f {pattern[0]+1+offset}//{ni+1} {pattern[1]+1+offset}//{ni+1} {pattern[2]+1+offset}//{ni+1} {pattern[3]+1+offset}//{ni+1}\n"
+
+        result += "s 0\n"  # smooth shading OFF
 
         return result
 
@@ -136,25 +131,3 @@ with open(filename, 'w') as fh:
 
     grid = Grid(W, H)
     fh.write(grid.as_obj)
-
-    import sys
-    sys.exit()
-
-    offset = 0
-    for x in range(W):
-        for y in range(H):
-            offset = (W * y) + x
-            #height = heightmap[offset]
-            height = 1
-            print('x', x, 'y', y, 'offset', offset, 'height', height)
-            count += 1
-            #print(count, height)
-            c = Cube(x, y, index=count, height=height)
-            fh.write(c.vertices_str)
-    print(f"{count} total cubes")
-
-    for x in range(W):
-        for y in range(H):
-            for face in Cube.faces:
-                offset = 8 * y + (8 * H * x)
-                fh.write(f"f {face[0]+offset} {face[1]+offset} {face[2]+offset} {face[3]+offset}\n")
