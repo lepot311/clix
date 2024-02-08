@@ -41,8 +41,8 @@ class Grid:
 
         self.cubes = []
 
-        for y in range(self.h):
-            for x in range(self.w):
+        for x in range(self.h):
+            for y in range(self.w):
                 cube = Cube(x, y)
                 self.cubes.append(cube)
 
@@ -53,7 +53,7 @@ class Grid:
         # vertices
         for cube in self.cubes:
             for v in cube.vertices:
-                result += f"v {v[0]} {v[1]} {v[2]}\n"
+                result += f"v {v[0]+cube.x} {v[1]+cube.y} {v[2]}\n"
 
         # normals
         result += "\n"
@@ -63,8 +63,9 @@ class Grid:
         # faces
         result += "\n"
         for i, cube in enumerate(self.cubes):
+            offset = 8 * cube.x + (8 * self.h * cube.y)
             for ni, pattern in enumerate(Cube.face_patterns):
-                result += f"f {pattern[0]+1}//{ni+1} {pattern[1]+1}//{ni+1} {pattern[2]+1}//{ni+1} {pattern[3]+1}//{ni+1}\n"
+                result += f"f {pattern[0]+1+offset}//{ni+1} {pattern[1]+1+offset}//{ni+1} {pattern[2]+1+offset}//{ni+1} {pattern[3]+1+offset}//{ni+1}\n"
 
         return result
 
@@ -125,8 +126,8 @@ filename = "map.obj"
 with open(filename, 'w') as fh:
     #fh.write("o clixmap\n")
 
-    W = 1
-    H = 1
+    W = 16
+    H = 24
 
     height = 0
     count = 0
