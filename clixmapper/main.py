@@ -5,7 +5,6 @@ import itertools
 
 
 class Cube:
-    vertices = list(itertools.product((0.0, 1.0), repeat=3))
     face_patterns = (
         (1, 5, 7, 3), # z=0 down
         (0, 2, 6, 4), # z=1 up
@@ -23,21 +22,37 @@ class Cube:
         ( 0.0,  1.0,  0.0),
     )
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, height=1):
         self.x = x
         self.y = y
 
+        self.height = height
+
+        self.vertices = list(itertools.product((0.0, 1.0), repeat=3))
+
+        # adjust height
+        for i, v in enumerate(self.vertices):
+            if v[2] == 1.0:
+                v = self.vertices[i]
+                self.vertices[i] = (v[0], v[1], v[2]+height)
+
 
 class Grid:
-    def __init__(self, width, height):
+    def __init__(self, width, height, heightmap=None):
         self.w = width
         self.h = height
 
+        self.heightmap = heightmap
+
         self.cubes = []
+
+        offset = 0
+        count = 0
 
         for x in range(self.h):
             for y in range(self.w):
-                cube = Cube(x, y)
+                offset = (self.w * x) + y
+                cube = Cube(x, y, height=self.heightmap[offset])
                 self.cubes.append(cube)
 
     @property
@@ -119,15 +134,8 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    #fh.write("o clixmap\n")
-
     W = 16
     H = 24
 
-    height = 0
-    count = 0
-
-    heightmap = heightmap_image()
-
-    grid = Grid(W, H)
+    grid = Grid(W, H, heightmap=heightmap_image())
     fh.write(grid.as_obj)
