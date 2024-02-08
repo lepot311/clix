@@ -4,34 +4,69 @@ Create OBJ meshes for Clix maps
 import itertools
 
 
+class Face:
+    def __init__(self, vertices):
+        self.vertices = vertices
+        self.normal   = 'TODO'
+
+
 class Cube:
     vertices = list(itertools.product((0.0, 1.0), repeat=3))
-    faces = (
-        (1, 5, 7, 3),
-        (1, 5, 6, 2),
-        (1, 3, 4, 2),
-        (8, 6, 2, 4),
-        (8, 4, 3, 7),
-        (8, 6, 5, 7),
+    face_patterns = (
+        (1, 5, 7, 3), # z=0 down
+        (0, 2, 6, 4), # z=1 up
+        (0, 1, 3, 2), # x=0 west
+        (4, 6, 7, 5), # x=1 east
+        (0, 4, 5, 1), # y=0 south
+        (2, 3, 7, 6), # y=1 north
+    )
+    normals = (
+        ( 0.0,  0.0, -1.0),
+        ( 0.0,  0.0,  1.0),
+        (-1.0,  0.0,  0.0),
+        ( 1.0,  0.0,  0.0),
+        ( 0.0, -1.0,  0.0),
+        ( 0.0,  1.0,  0.0),
     )
 
-    def __init__(self, x, y, index=0, height=1):
-        self.x      = x
-        self.y      = y
-        self.index  = index
-        self.height = height
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-        self.vertices = [
-            (x + self.x * -1, y + self.y, z * max(0.01, self.height)) for x, y, z
-            in Cube.vertices
-        ]
+
+class Grid:
+    def __init__(self, width, height):
+        self.w = width
+        self.h = height
+
+        self.cubes = []
+
+        for y in range(self.h):
+            for x in range(self.w):
+                cube = Cube(x, y)
+                self.cubes.append(cube)
 
     @property
-    def vertices_str(self):
-        return "".join([
-            f"v {vertex[0]} {vertex[1]} {vertex[2]}\n"
-            for vertex in self.vertices
-        ])
+    def as_obj(self):
+        result = "s 0\n"  # smooth shading OFF
+
+        # vertices
+        for cube in self.cubes:
+            for v in cube.vertices:
+                result += f"v {v[0]} {v[1]} {v[2]}\n"
+
+        # normals
+        result += "\n"
+        for normal in Cube.normals:
+            result += f"vn {normal[0]} {normal[1]} {normal[2]}\n"
+
+        # faces
+        result += "\n"
+        for i, cube in enumerate(self.cubes):
+            for ni, pattern in enumerate(Cube.face_patterns):
+                result += f"f {pattern[0]+1}//{ni+1} {pattern[1]+1}//{ni+1} {pattern[2]+1}//{ni+1} {pattern[3]+1}//{ni+1}\n"
+
+        return result
 
 
 def heightmap_random(max_height=4):
@@ -88,21 +123,28 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    fh.write("o clixmap\n")
+    #fh.write("o clixmap\n")
 
-    W = 16
-    H = 24
+    W = 1
+    H = 1
 
     height = 0
     count = 0
 
     heightmap = heightmap_image()
 
+    grid = Grid(W, H)
+    fh.write(grid.as_obj)
+
+    import sys
+    sys.exit()
+
     offset = 0
     for x in range(W):
         for y in range(H):
             offset = (W * y) + x
-            height = heightmap[offset]
+            #height = heightmap[offset]
+            height = 1
             print('x', x, 'y', y, 'offset', offset, 'height', height)
             count += 1
             #print(count, height)
