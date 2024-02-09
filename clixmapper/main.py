@@ -21,6 +21,32 @@ class Cube:
         ( 0.0, -1.0,  0.0),
         ( 0.0,  1.0,  0.0),
     )
+    normals_flat = (
+        (-0.750, -0.433,  0.500),
+        ( 0.433, -0.750,  0.500),
+        ( 0.750,  0.433,  0.500),
+        (-0.433,  0.750,  0.500),
+        (-0.433, -0.750, -0.500),
+        (-0.750,  0.433, -0.500),
+        ( 0.433,  0.750, -0.500),
+        ( 0.750, -0.433, -0.500),
+        (-0.500, -0.433, -0.750),
+        (-0.500, -0.750,  0.433),
+        (-0.500,  0.433,  0.750),
+        (-0.500,  0.750, -0.433),
+        ( 0.500, -0.750, -0.433),
+        ( 0.500,  0.433, -0.750),
+        ( 0.500,  0.750,  0.433),
+        ( 0.500, -0.433,  0.750),
+        (-0.750, -0.500, -0.433),
+        ( 0.433, -0.500, -0.750),
+        ( 0.750, -0.500,  0.433),
+        (-0.433, -0.500,  0.750),
+        (-0.433,  0.500, -0.750),
+        (-0.750,  0.500,  0.433),
+        ( 0.433,  0.500,  0.750),
+        ( 0.750,  0.500, -0.433),
+    )
 
     def __init__(self, x, y, height=1):
         self.x = x
@@ -57,6 +83,10 @@ class Grid:
 
     @property
     def as_obj(self):
+        '''
+        Forward Y+
+        Up      Z+
+        '''
         result = ""
         # vertices
         for cube in self.cubes:
@@ -65,17 +95,17 @@ class Grid:
 
         # normals
         result += "\n"
-        for normal in Cube.normals:
+        for normal in Cube.normals_flat:
             result += f"vn {normal[0]} {normal[1]} {normal[2]}\n"
+
+        result += "s 0\n"  # smooth shading OFF
 
         # faces
         result += "\n"
         for i, cube in enumerate(self.cubes):
             offset = 8 * cube.x + (8 * self.h * cube.y)
             for ni, pattern in enumerate(Cube.face_patterns):
-                result += f"f {pattern[0]+1+offset}//{ni+1} {pattern[1]+1+offset}//{ni+1} {pattern[2]+1+offset}//{ni+1} {pattern[3]+1+offset}//{ni+1}\n"
-
-        result += "s 0\n"  # smooth shading OFF
+                result += f"f {pattern[0]+1+offset}//{ni*4+1} {pattern[1]+1+offset}//{ni*4+2} {pattern[2]+1+offset}//{ni*4+3} {pattern[3]+1+offset}//{ni*4+4}\n"
 
         return result
 
