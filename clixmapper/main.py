@@ -93,19 +93,46 @@ class Grid:
             for v in cube.vertices:
                 result += f"v {v[0]+cube.x} {v[1]+cube.y} {v[2]}\n"
 
+        # vertex texture coords (UVs)
+        # load the map image
+        # rotate the map image as needed
+        # figure out how many pixels per cell in x and y directions
+        # coords are 0..1??
+        for i, cube in enumerate(self.cubes):
+            order = (
+                (0, 1),
+                (0, 0),
+                (1, 0),
+                (1, 1),
+            )
+            # write four coords
+            for ox, oy in order:
+                offset_x = ((1/self.w) * ox) + ((1/self.w) * cube.x)
+                offset_y = ((1/self.h) * oy) + ((1/self.h) * cube.y) 
+
+                if i % 16 == 0:
+                #if ox == 0 and oy == 0:
+                    print(f"cube={i} offset_x={offset_x} offset_y={offset_y}")
+
+                result += f"vt { offset_x } { offset_y }\n"
+
         # normals
         result += "\n"
         for normal in Cube.normals_flat:
             result += f"vn {normal[0]} {normal[1]} {normal[2]}\n"
 
-        result += "s 0\n"  # smooth shading OFF
+        result += "s 0"  # smooth shading OFF
 
         # faces
         result += "\n"
         for i, cube in enumerate(self.cubes):
             offset = 8 * cube.x + (8 * self.h * cube.y)
             for ni, pattern in enumerate(Cube.face_patterns):
-                result += f"f {pattern[0]+1+offset}//{ni*4+1} {pattern[1]+1+offset}//{ni*4+2} {pattern[2]+1+offset}//{ni*4+3} {pattern[3]+1+offset}//{ni*4+4}\n"
+                if ni == 0:
+                    # TODO may need to flip the order like we did when writing the vt coords....
+                    result += f"f {pattern[0]+1+offset}/{i*4+1}/{ni*4+1} {pattern[1]+1+offset}/{i*4+2}/{ni*4+2} {pattern[2]+1+offset}/{i*4+3}/{ni*4+3} {pattern[3]+1+offset}/{i*4+4}/{ni*4+4}\n"
+                else:
+                    result += f"f {pattern[0]+1+offset}//{ni*4+1} {pattern[1]+1+offset}//{ni*4+2} {pattern[2]+1+offset}//{ni*4+3} {pattern[3]+1+offset}//{ni*4+4}\n"
 
         return result
 
