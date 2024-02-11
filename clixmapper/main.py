@@ -48,58 +48,26 @@ class Cube:
         ( 0.750,  0.500, -0.433),
     )
 
-    def __init__(self, x, y, height=1):
-        self.x = x
-        self.y = y
-
+    def __init__(self, height=1):
         self.height = height
 
         self.vertices = list(itertools.product((0.0, 1.0), repeat=3))
 
-        # adjust height
-        for i, v in enumerate(self.vertices):
-            v = self.vertices[i]
-            #if v[2] == 1.0:
-            #    self.vertices[i] = (v[0], v[1], v[2]*self.height)
-            #else:
-            #    self.vertices[i] = (v[0], v[1], v[2])
-            self.vertices[i] = (v[0], v[1], v[2])
-
-
-class Grid:
-    def __init__(self, width, height, heightmap=None):
-        self.w = width
-        self.h = height
-
-        self.heightmap = heightmap
-
-        self.cubes = []
-
-        for row in range(self.h):
-            for col in range(self.w):
-                #offset = (row * self.w) + col
-                #cube = Cube(col, row, height=self.heightmap[offset])
-                cube = Cube(col, row)
-                self.cubes.append(cube)
+    @property
+    def obj_vertices(self):
+        result = ""
+        for v in self.vertices:
+            result += f"v {v[0]} {v[1]} {v[2]}\n"
+        return result
 
     @property
-    def as_obj(self):
-        '''
-        Forward Y+
-        Up      Z+
-        '''
-        result = ""
-        # vertices
-        for cube in self.cubes:
-            for v in cube.vertices:
-                # flip the Y axis
-                result += f"v {v[0]+cube.x} {v[1]-(cube.y+1)} {v[2]}\n"
-
+    def obj_uvs(self):
         # vertex texture coords (UVs)
         # load the map image
         # rotate the map image as needed
         # figure out how many pixels per cell in x and y directions
         # coords are 0..1??
+
         for i, cube in enumerate(self.cubes):
             offset_cube_x = (1/self.w) * cube.x
             offset_cube_y = (1/self.h) * cube.y
@@ -118,27 +86,71 @@ class Grid:
 
                 result += f"vt {u} {v}\n"
 
+    @property
+    def obj_normals(self):
         # normals
         result += "\n"
         for normal in Cube.normals:
             result += f"vn {normal[0]} {normal[1]} {normal[2]}\n"
 
-        result += "s 0"  # smooth shading OFF
+    @property
+    def obj_faces(self):
+        result = "\n"
+        for pattern in Cube.face_patterns:
+            result += f"f {pattern[0]+1} {pattern[1]+1} {pattern[2]+1} {pattern[3]+1}\n"
 
-        # faces
-        result += "\n"
+        #for i, cube in enumerate(self.cubes):
+        #    offset = 8 * cube.x + (8 * self.h * cube.y)
 
-        draw_faces = True
-        if draw_faces:
-            for i, cube in enumerate(self.cubes):
-                offset = 8 * cube.x + (8 * self.h * cube.y)
-                for ni, pattern in enumerate(Cube.face_patterns):
-                    if ni == 0:
-                        # TODO may need to flip the order like we did when writing the vt coords....
-                        # add uv to top faces only
-                        result += f"f {pattern[0]+1+offset}/{i*4+1}/{ni+1} {pattern[1]+1+offset}/{i*4+2}/{ni+1} {pattern[2]+1+offset}/{i*4+3}/{ni+1} {pattern[3]+1+offset}/{i*4+4}/{ni+1}\n"
-                    else:
-                        result += f"f {pattern[0]+1+offset}//{ni+1} {pattern[1]+1+offset}//{ni+1} {pattern[2]+1+offset}//{ni+1} {pattern[3]+1+offset}//{ni+1}\n"
+        #for ni, pattern in enumerate(Cube.face_patterns):
+        #    result += f"f {pattern[0]+1+offset}//{ni+1} {pattern[1]+1+offset}//{ni+1} {pattern[2]+1+offset}//{ni+1} {pattern[3]+1+offset}//{ni+1}\n"
+
+            #if ni == 0:
+                # TODO may need to flip the order like we did when writing the vt coords....
+                # add uv to top faces only
+            #    result += f"f {pattern[0]+1+offset}/{i*4+1}/{ni+1} {pattern[1]+1+offset}/{i*4+2}/{ni+1} {pattern[2]+1+offset}/{i*4+3}/{ni+1} {pattern[3]+1+offset}/{i*4+4}/{ni+1}\n"
+            #else:
+            #    result += f"f {pattern[0]+1+offset}//{ni+1} {pattern[1]+1+offset}//{ni+1} {pattern[2]+1+offset}//{ni+1} {pattern[3]+1+offset}//{ni+1}\n"
+
+        return result
+
+
+class Grid:
+    def __init__(self, width, height, heightmap=None):
+        self.w = width
+        self.h = height
+
+        self.heightmap = heightmap
+
+        self.cubes = []
+
+        for row in range(self.h):
+            for col in range(self.w):
+                #offset = (row * self.w) + col
+                #cube = Cube(col, row, height=self.heightmap[offset])
+                cube = Cube()
+                self.cubes.append(cube)
+
+    @property
+    def as_obj(self):
+        '''
+        Forward Y+
+        Up      Z+
+        '''
+        result = "s 0\n"  # smooth shading OFF
+
+        # vertices
+        for cube in self.cubes:
+            result += cube.obj_vertices
+
+        #for cube in self.cubes:
+        #    result += cube.obj_uvs
+
+        #for cube in self.cubes:
+        #    result += cube.obj_normals
+
+        for cube in self.cubes:
+            result += cube.obj_faces
 
         return result
 
@@ -197,8 +209,8 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    W = 6
-    H = 3
+    W = 1
+    H = 1
 
     grid = Grid(W, H, heightmap=heightmap_image())
     fh.write(grid.as_obj)
