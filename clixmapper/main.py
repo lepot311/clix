@@ -48,7 +48,11 @@ class Cube:
         ( 0.750,  0.500, -0.433),
     )
 
-    def __init__(self, height=1):
+    def __init__(self, grid, x, y, height=1):
+        self.grid = grid
+        self.x    = x
+        self.y    = y
+
         self.height = height
 
         self.vertices = list(itertools.product((0.0, 1.0), repeat=3))
@@ -101,9 +105,11 @@ class Cube:
         for normal in Cube.normals:
             result += f"vn {normal[0]} {normal[1]} {normal[2]}\n"
 
-    def obj_faces(self, x, y):
+    @property
+    def obj_faces(self):
         result = "\n"
-        offset = x * 8
+        offset = (8 * self.x) + (8 * self.y * self.grid.w)
+        print(f"cube={self.grid.cubes.index(self)} offset={offset}")
 
         for pattern in Cube.face_patterns:
             result += "f "
@@ -134,10 +140,11 @@ class Grid:
 
         self.heightmap = heightmap
 
-        self.cubes = [
-            Cube()
-            for n in range(self.w * self.h)
-        ]
+        self.cubes = []
+
+        for row in range(self.h):
+            for col in range(self.w):
+                self.cubes.append(Cube(self, col, row))
 
     @property
     def as_obj(self):
@@ -148,13 +155,8 @@ class Grid:
         result = "s 0\n"  # smooth shading OFF
 
         # translate
-        for row in range(self.h):
-            for col in range(self.w):
-                offset = col + (row * col)
-                cube = self.cubes[offset]
-                # translate in-place
-                cube.translate(col, row-1, 0)
-
+        for cube in self.cubes:
+            cube.translate(cube.x, -cube.y, 0)
 
         # vertices
         for cube in self.cubes:
@@ -166,9 +168,8 @@ class Grid:
         #for cube in self.cubes:
         #    result += cube.obj_normals
 
-        for row in range(self.h):
-            for col in range(self.w):
-                result += cube.obj_faces(col, row)
+        for cube in self.cubes:
+            result += cube.obj_faces
 
         return result
 
@@ -227,8 +228,8 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    W = 2
-    H = 1
+    W = 3
+    H = 5
 
     grid = Grid(W, H, heightmap=heightmap_image())
     fh.write(grid.as_obj)
