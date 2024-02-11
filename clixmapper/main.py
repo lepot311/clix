@@ -88,8 +88,11 @@ class Cube:
         # coords are 0..1??
         result = '\n'
 
-        offset_x = 1.0 / self.grid.w
-        offset_y = 1.0 / self.grid.h
+        div_x = 1.0 / self.grid.w
+        div_y = 1.0 / self.grid.h
+
+        offset_x = div_x * self.x
+        offset_y = div_y * (self.grid.h - self.y - 1)
 
         order = (
             (0, 0),
@@ -100,8 +103,8 @@ class Cube:
 
         # write four coords
         for ox, oy in order:
-            u = offset_x * ox
-            v = offset_y * oy
+            u = offset_x + (ox * div_x)
+            v = offset_y + (oy * div_y)
 
             result += f"vt {u} {v}\n"
 
@@ -231,8 +234,8 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    W = 2
-    H = 2
+    W = 16
+    H = 24
 
     grid = Grid(W, H, heightmap=heightmap_image())
     fh.write(grid.as_obj)
