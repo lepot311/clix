@@ -53,6 +53,14 @@ class Cube:
 
         self.vertices = list(itertools.product((0.0, 1.0), repeat=3))
 
+    def translate(self, x, y, z):
+        for i, v in enumerate(self.vertices):
+            self.vertices[i] = (
+                v[0] + x,
+                v[1] + y,
+                v[2] + z,
+            )
+
     @property
     def obj_vertices(self):
         result = ""
@@ -122,14 +130,10 @@ class Grid:
 
         self.heightmap = heightmap
 
-        self.cubes = []
-
-        for row in range(self.h):
-            for col in range(self.w):
-                #offset = (row * self.w) + col
-                #cube = Cube(col, row, height=self.heightmap[offset])
-                cube = Cube()
-                self.cubes.append(cube)
+        self.cubes = [
+            Cube()
+            for n in range(self.w * self.h)
+        ]
 
     @property
     def as_obj(self):
@@ -138,6 +142,15 @@ class Grid:
         Up      Z+
         '''
         result = "s 0\n"  # smooth shading OFF
+
+        # translate
+        for row in range(self.h):
+            for col in range(self.w):
+                offset = col + (row * col)
+                cube = self.cubes[offset]
+                # translate in-place
+                cube.translate(0, -1, 0)
+
 
         # vertices
         for cube in self.cubes:
