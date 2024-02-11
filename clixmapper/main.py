@@ -101,11 +101,15 @@ class Cube:
         for normal in Cube.normals:
             result += f"vn {normal[0]} {normal[1]} {normal[2]}\n"
 
-    @property
-    def obj_faces(self):
+    def obj_faces(self, x, y):
         result = "\n"
+        offset = x * 8
+
         for pattern in Cube.face_patterns:
-            result += f"f {pattern[0]+1} {pattern[1]+1} {pattern[2]+1} {pattern[3]+1}\n"
+            result += "f "
+            for n in range(4):
+                result += f"{pattern[n]+1+offset} "
+            result += "\n"
 
         #for i, cube in enumerate(self.cubes):
         #    offset = 8 * cube.x + (8 * self.h * cube.y)
@@ -149,7 +153,7 @@ class Grid:
                 offset = col + (row * col)
                 cube = self.cubes[offset]
                 # translate in-place
-                cube.translate(0, -1, 0)
+                cube.translate(col, row-1, 0)
 
 
         # vertices
@@ -162,8 +166,9 @@ class Grid:
         #for cube in self.cubes:
         #    result += cube.obj_normals
 
-        for cube in self.cubes:
-            result += cube.obj_faces
+        for row in range(self.h):
+            for col in range(self.w):
+                result += cube.obj_faces(col, row)
 
         return result
 
@@ -222,7 +227,7 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    W = 1
+    W = 2
     H = 1
 
     grid = Grid(W, H, heightmap=heightmap_image())
