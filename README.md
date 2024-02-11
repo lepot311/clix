@@ -25,3 +25,21 @@ Generates 3D map objects in OBJ format with different heights per tile.
   - integer arrays
   - simplex noise (using the `noise` package)
   - random heights
+
+### Installation
+#### Linux
+```
+git clone https://github.com/lepot311/clix.git
+cd clix
+python -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+#### Windows
+```
+git clone https://github.com/lepot311/clix.git
+cd clix
+python -m venv env
+.\env\Scripts\activate
+pip install -r requirements.txt
+```
