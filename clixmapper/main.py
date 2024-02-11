@@ -109,7 +109,6 @@ class Cube:
     def obj_faces(self):
         result = "\n"
         offset = (8 * self.x) + (8 * self.y * self.grid.w)
-        print(f"cube={self.grid.cubes.index(self)} offset={offset}")
 
         for pattern in Cube.face_patterns:
             result += "f "
@@ -156,7 +155,7 @@ class Grid:
 
         # translate
         for cube in self.cubes:
-            cube.translate(cube.x, -cube.y, 0)
+            cube.translate(cube.x, -cube.y-1, 0)
 
         # vertices
         for cube in self.cubes:
