@@ -48,12 +48,10 @@ class Cube:
         ( 0.750,  0.500, -0.433),
     )
 
-    def __init__(self, grid, x, y, height=1):
+    def __init__(self, grid, x, y):
         self.grid = grid
         self.x    = x
         self.y    = y
-
-        self.height = height
 
         self.vertices = list(itertools.product((0.0, 1.0), repeat=3))
 
@@ -64,6 +62,15 @@ class Cube:
                 v[1] + y,
                 v[2] + z,
             )
+
+    def set_height(self, height):
+        for i, v in enumerate(self.vertices):
+            if v[2] == 1.0:
+                self.vertices[i] = (
+                    v[0],
+                    v[1],
+                    v[2] + height,
+                )
 
     @property
     def obj_vertices(self):
@@ -153,9 +160,13 @@ class Grid:
         '''
         result = "s 0\n"  # smooth shading OFF
 
-        # translate
+        # translate and set height
         for cube in self.cubes:
             cube.translate(cube.x, -cube.y-1, 0)
+
+            offset = cube.x + (cube.y * self.w)
+            height = self.heightmap[offset]
+            cube.set_height(height)
 
         # vertices
         for cube in self.cubes:
@@ -227,8 +238,8 @@ def heightmap_image():
 filename = "map.obj"
 
 with open(filename, 'w') as fh:
-    W = 3
-    H = 5
+    W = 16
+    H = 24
 
     grid = Grid(W, H, heightmap=heightmap_image())
     fh.write(grid.as_obj)
