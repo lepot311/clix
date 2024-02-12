@@ -1,3 +1,16 @@
+'''
+ClixGrabber
+
+Usage:
+  clixgrabber.py [-m] [--cpus=<n>] cards <unit_ids>...
+  clixgrabber.py [-m] [--cpus=<n>] sets <set_ids>...
+
+Options:
+  -h          Show this help text
+  -m          Use multiprocessing
+  --cpus=<n>  Number of CPUs to use for multiprocessing
+  --zoom=<z>  Page zoom [default: 125]
+'''
 import os
 
 from PIL import Image
@@ -74,11 +87,11 @@ class CardGrabber:
         return path_cropped
 
 
-    def grab_card(self, unit_id, set_name=None):
-        if set_name:
-            path_final = f"{self.output_dir}/{set_name}/{unit_id}.png"
+    def grab_card(self, unit_id, set_id=None):
+        if set_id:
+            path_final = f"{self.output_dir}/{set_id}/{unit_id}.png"
             try:
-                os.mkdir(f"{self.output_dir}/{set_name}")
+                os.mkdir(f"{self.output_dir}/{set_id}")
             except FileExistsError:
                 pass
         else:
@@ -114,35 +127,92 @@ class CardGrabber:
 
 
 if __name__ == '__main__':
-    sets = [
-        'm24',
-    ]
+    import sys
 
+    from docopt import docopt
     import requests
 
-    set_name__unit_id = []
+    api = "https://hcunits.net/api/v1"
 
-    for set_name in sets:
-        url = f"https://hcunits.net/api/v1/sets/{set_name}/"
-        response = requests.get(url)
-        data = response.json()
-        for unit in data['unit_list']:
-            set_name__unit_id.append([
-                set_name,
-                unit['unit_id'],
+    def grab(targets):
+
+        with CardGrabber() as grabber:
+            for set_id, unit_id in targets:
+                print(f"Grabbing {set_id} : {unit_id}")
+                grabber.grab_card(unit_id, set_id=set_id)
+
+    def grab_mp(targets):
+        targets = [targets]
+
+        with CardGrabber() as grabber:
+            for set_id, unit_id in targets:
+                print(f"Grabbing {set_id} : {unit_id}")
+                grabber.grab_card(unit_id, set_id=set_id)
+
+
+    args = docopt(__doc__)
+
+    unit_ids = args.get('<unit_ids>')
+    set_ids  = args.get('<set_ids>')
+
+    errors = []
+    set_id__unit_id = []
+
+    if unit_ids:
+        for unit_id in unit_ids:
+            # get set name
+            url = f"{api}/units/{unit_id}/"
+            response = requests.get(url)
+
+            if not response.ok:
+                errors.append(set_id)
+                continue
+
+            set_id__unit_id.append([
+                response.json()['set_id'],
+                response.json()['unit_id'],
             ])
 
-    def grab(unit_ids):
-        with CardGrabber() as grabber:
-            unit_ids = [unit_ids]
+    if set_ids:
+        for set_id in set_ids:
+            print(f"Downloading card list for set '{set_id}'")
+            url = f"{api}/sets/{set_id}/"
+            response = requests.get(url)
 
-            for set_name, unit_id in unit_ids:
-                print(f"Grabbing {set_name} : {unit_id}")
-                grabber.grab_card(unit_id, set_name=set_name)
-                break
+            if not response.ok:
+                errors.append(f"Could not find set {set_id} on hcunits.net")
+                continue
 
-    from multiprocessing import Pool
+            data = response.json()
 
-    with Pool() as pool:
-        print(f"Process pool size: {pool._processes}")
-        pool.map(grab, set_name__unit_id)
+            for unit in data['unit_list']:
+                set_id__unit_id.append([
+                    set_id,
+                    unit['unit_id'],
+                ])
+
+    if errors:
+        print("Exiting due to the following errors:")
+        for e in errors:
+            print(error)
+        sys.exit(1)
+
+    if args.get('-m'):
+        print("Using multiprocessing.")
+        from multiprocessing import Pool
+
+        if args.get('--cpus'):
+            try:
+                n_cpus = int(args.get('--cpus'))
+            except ValueError:
+                sys.exit("ERROR: n_cpus must be an integer number.")
+            pool = Pool(n_cpus)
+        else:
+            pool = Pool()
+
+        with pool as p:
+            print(f"  Process pool size: {p._processes}")
+            p.map(grab_mp, set_id__unit_id)
+
+    else:
+        grab(set_id__unit_id)
